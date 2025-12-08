@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title>在庫不足</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f9f9f9;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                text-align: center;
+            }
+            h1 {
+                font-size: 2.5em;
+                color: #e74c3c;
+                margin: 20px 0;
+            }
+            h2 {
+                font-size: 1.5em;
+                color: #555;
+                margin: 10px 0;
+            }
+            .message-box {
+                background-color: #fff;
+                padding: 20px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                width: 80%;
+                max-width: 600px;
+                margin: 20px 0;
+                line-height: 1.6;
+            }
+            a {
+                text-decoration: none;
+                color: #3498db;
+                font-size: 1em;
+                font-weight: bold;
+                margin-top: 20px;
+                display: inline-block;
+                padding: 10px 15px;
+                border: 1px solid #3498db;
+                border-radius: 4px;
+                background-color: #fff;
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }
+            a:hover {
+                background-color: #3498db;
+                color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>在庫不足</h1>
+        <div class="message-box">
+            <h2>申し訳ございません。</h2>
+            現在、ご希望の商品は在庫不足のためご注文いただけません。<br>
+            恐れ入りますが、他の商品をご検討ください。
+        </div>
+        <a th:href="@{/catalog/display-list}">商品一覧に戻る</a>
+    </body>
+</html>

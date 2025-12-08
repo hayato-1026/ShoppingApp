@@ -1,0 +1,64 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title>注文完了</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f9f9f9;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                text-align: center;
+            }
+            h1 {
+                font-size: 2em;
+                color: #333;
+                margin: 20px 0;
+            }
+            .order-completion {
+                font-size: 1.2em;
+                color: #555;
+                margin: 20px 0;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                width: 80%;
+                max-width: 600px;
+                line-height: 1.6;
+            }
+            a {
+                text-decoration: none;
+                color: #3498db;
+                font-size: 1em;
+                font-weight: bold;
+                margin-top: 20px;
+                display: inline-block;
+                padding: 10px 15px;
+                border: 1px solid #3498db;
+                border-radius: 4px;
+                background-color: #fff;
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }
+            a:hover {
+                background-color: #3498db;
+                color: #fff;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>注文完了</h1>
+        <div class="order-completion" th:if="${order != null}">
+            ご注文ありがとうございます！<br>
+            ご注文内容が確定しました。<br>
+            <strong>注文ID:</strong> 「<span th:text="${order.id}">12345</span>」
+        </div>
+        <a th:href="@{/catalog/display-list}">商品一覧に戻る</a>
+    </body>
+</html>

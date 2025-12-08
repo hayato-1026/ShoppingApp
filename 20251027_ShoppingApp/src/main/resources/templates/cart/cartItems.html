@@ -1,0 +1,179 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title>ショッピングカート</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            /* 共通レイアウト */
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f9f9f9;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: 100vh;
+            }
+
+            /* ヘッダ */
+            h1 {
+                font-size: 2em;
+                color: #333;
+                margin: 20px 0;
+            }
+
+            /* テーブル */
+            .cart-table {
+                width: 80%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                background-color: #fff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            .cart-table th, .cart-table td {
+                padding: 12px 15px;
+                text-align: left;
+            }
+            .cart-table th {
+                background-color: #f0f0f0;
+                color: #333;
+                font-weight: bold;
+                border-bottom: 2px solid #ddd;
+            }
+            .cart-table tr:nth-child(even) {
+                background-color: #f7f7f7;
+            }
+            .cart-table tr:hover {
+                background-color: #f0f8ff;
+            }
+
+            /* 操作系 */
+            form.inline {
+                display: inline;
+            }
+            input[type="submit"].btn {
+                margin: 10px 5px;
+                padding: 10px 16px;
+                font-size: 1em;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                background-color: #e74c3c;
+                color: #fff;
+            }
+            input[type="submit"].btn:hover {
+                background-color: #c0392b;
+            }
+            /* 注文ボタン（目立たせる） */
+            input[type="submit"].primary {
+                background-color: #2ecc71;
+                color: #fff;
+            }
+            input[type="submit"].primary:hover {
+                background-color: #27ae60;
+            }
+
+            /* 合計表示領域：テーブルと同幅に揃える */
+            .summary {
+                width: 80%;
+                margin: 20px 0;
+                font-size: 1.1em;
+                color: #555;
+                text-align: right;
+                box-sizing: border-box;
+            }
+            .summary .line {
+                background-color: #fff;
+                padding: 12px 16px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                margin-bottom: 8px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .summary .label {
+                color: #666;
+                font-size: 0.95em;
+            }
+            .summary .value {
+                color: #333;
+                font-weight: bold;
+                font-size: 1.05em;
+            }
+
+            /* リンク */
+            .back-link {
+                width: 80%;
+                margin-top: 12px;
+                text-align: left;
+            }
+            .back-link a {
+                text-decoration: none;
+                color: #3498db;
+                font-size: 1em;
+                font-weight: bold;
+            }
+            .back-link a:hover {
+                text-decoration: underline;
+            }
+
+            /* レスポンシブ（小さい画面では幅を縮める） */
+            @media (max-width: 800px) {
+                .cart-table, .summary, .back-link { width: 95%; }
+                .cart-table th, .cart-table td { padding: 10px; }
+                input[type="submit"].btn { padding: 8px 12px; font-size: 0.95em; }
+            }
+        </style>
+    </head>
+    <body>
+        <h1>ショッピングカート</h1>
+
+        <table class="cart-table">
+            <tr>
+                <th>商品名</th>
+                <th>価格</th>
+                <th>数量</th>
+                <th>操作</th>
+            </tr>
+            <tr th:each="item : ${cartInput.cartItemInputs}">
+                <td><span th:text="${item.productName}">商品名</span></td>
+                <td><span th:text="${item.productPrice}">0</span>円</td>
+                <td><span th:text="${item.quantity}">0</span></td>
+                <td>
+                    <form class="inline" th:action="@{/cart/remove-item}" method="post">
+                        <input type="hidden" name="cartItemId" th:value="${item.id}" />
+                        <input type="submit" class="btn" value="カートから削除" />
+                    </form>
+                </td>
+            </tr>
+        </table>
+
+        <!-- 合計領域（デザイン統一） -->
+        <div class="summary">
+            <!-- 割引後（税抜）合計を表示 -->
+            <div class="line">
+                <div class="label">合計金額（割引後・税抜）</div>
+                <div class="value"><span th:text="${cartInput.totalAmount}">0</span>円</div>
+            </div>
+
+            <!-- 請求金額（最終・税込） -->
+            <div class="line">
+                <div class="label">請求金額（最終・税込）</div>
+                <div class="value"><span th:text="${cartInput.billingAmount}">0</span>円</div>
+            </div>
+        </div>
+
+        <!-- 注文ボタン（カートにアイテムがある場合のみ表示） -->
+        <form th:if="${cartInput.cartItemInputs.size() > 0}" th:action="@{/order/display-form}" method="get">
+            <input type="submit" class="btn primary" value="注文する" />
+        </form>
+
+        <div class="back-link">
+            <a th:href="@{/catalog/display-list}">商品一覧に戻る</a>
+        </div>
+    </body>
+</html>

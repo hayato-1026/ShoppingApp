@@ -1,0 +1,177 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <title>商品詳細</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f9f9f9;
+                margin: 0;
+                padding: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: 100vh;
+            }
+            h1 {
+                font-size: 2em;
+                color: #333;
+                margin: 20px 0;
+            }
+            table {
+                width: 80%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                background-color: #fff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            th, td {
+                padding: 12px 15px;
+                text-align: left;
+            }
+            th {
+                background-color: #f0f0f0;
+                color: #333;
+                font-weight: bold;
+                border-bottom: 2px solid #ddd;
+            }
+            tr:nth-child(even) {
+                background-color: #f7f7f7;
+            }
+            tr:hover {
+                background-color: #f0f8ff;
+            }
+            form {
+                width: 80%;
+                margin: 20px 0;
+                padding: 20px;
+                background-color: #fff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+                border-radius: 8px;
+            }
+            form input[type="text"], form input[type="submit"] {
+                margin: 10px 0;
+                padding: 10px;
+                font-size: 1em;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                width: 100%;
+                max-width: 300px;
+            }
+            form input[type="submit"] {
+                background-color: #3498db;
+                color: #fff;
+                cursor: pointer;
+                font-weight: bold;
+            }
+            form input[type="submit"]:hover {
+                background-color: #2980b9;
+            }
+            a {
+                text-decoration: none;
+                color: #3498db;
+                margin-top: 20px;
+            }
+            a:hover {
+                text-decoration: underline;
+            }
+            span.th-errors {
+                color: #e74c3c;
+                font-size: 0.9em;
+            }
+            .quantity-controls {
+                display: inline-flex;
+                align-items: center;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+                width: 100px;
+            }
+            .quantity-controls input[type="text"] {
+                text-align: center;
+                font-size: 1em;
+                border: none;
+                width: 60%;
+                padding: 5px;
+                margin: 0;
+            }
+            .quantity-controls .quantity-buttons {
+                display: flex;
+                flex-direction: column;
+                width: 40%;
+                height: 100%;
+            }
+            .quantity-controls .quantity-buttons button {
+                all: unset; /* Reset all styles */
+                cursor: pointer;
+                flex: 1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-size: 14px;
+                color: #333;
+                background-color: #f9f9f9;
+                border-left: 1px solid #ddd;
+                border-bottom: 1px solid #ddd;
+            }
+            .quantity-controls .quantity-buttons button:last-child {
+                border-bottom: none;
+            }
+            .quantity-controls .quantity-buttons button:hover {
+                background-color: #e0e0e0;
+            }
+            .quantity-controls .quantity-buttons button:active {
+                background-color: #d0d0d0;
+            }
+        </style>
+        <script>
+            function increaseQuantity() {
+                const quantityInput = document.getElementById('quantity');
+                const currentValue = parseInt(quantityInput.value) || 0;
+                quantityInput.value = currentValue + 1;
+            }
+
+            function decreaseQuantity() {
+                const quantityInput = document.getElementById('quantity');
+                const currentValue = parseInt(quantityInput.value) || 0;
+                if (currentValue > 0) {
+                    quantityInput.value = currentValue - 1;
+                }
+            }
+        </script>
+    </head>
+    <body>
+        <h1>商品詳細</h1>
+        <table>
+            <tr>
+                <th>商品名</th>
+                <td><span th:text="${product.name}">商品名01</span></td>
+            </tr>
+            <tr>
+                <th>価格</th>
+                <td><span th:text="${product.price}">300</span>円</td>
+            </tr>
+            <tr>
+                <th>在庫数</th>
+                <td><span th:text="${product.stock}">10</span></td>
+            </tr>
+        </table>
+        <form th:action="@{/cart/add-item}" method="post" th:object="${cartItemInput}">
+            <input type="hidden" th:field="*{productId}"/>
+            <label for="quantity">数量:</label>
+            <div class="quantity-controls">
+                <input type="text" id="quantity" th:field="*{quantity}" value="1"/>
+                <div class="quantity-buttons">
+                    <button type="button" onclick="increaseQuantity()">▲</button>
+                    <button type="button" onclick="decreaseQuantity()">▼</button>
+                </div>
+            </div>
+            <span class="th-errors" th:errors="*{quantity}"></span>
+            <input type="submit" value="カートに追加"/>
+        </form>
+        <a th:href="@{/catalog/display-list}">商品一覧に戻る</a>
+    </body>
+</html>
