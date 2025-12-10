@@ -20,9 +20,9 @@ INSERT INTO t_product
 ;
 
 INSERT INTO t_order
-(id, order_date_time, billing_amount, customer_name, customer_address, customer_phone, customer_email_address, payment_method) VALUES
-('o01', '2025-10-31', 770, 'cname01', 'caddress01', '090-0000-0001', 'cname01@example.com', 'BANK')
-,('o02', '2025-10-31', 2000, 'cname02', 'caddress02', '090-0000-0002', 'cname02@example.com', 'CONVENIENCE_STORE')
+(id, order_date_time, billing_amount, customer_name, customer_address, customer_phone, customer_email_address, payment_method, points_used, points_earned) VALUES
+('o01', '2025-10-31', 770, 'cname01', 'caddress01', '090-0000-0001', 'cname01@example.com', 'BANK', 0, 0)
+,('o02', '2025-10-31', 2000, 'cname02', 'caddress02', '090-0000-0002', 'cname02@example.com', 'CONVENIENCE_STORE', 0, 0)
 ;
 
 INSERT INTO t_order_item

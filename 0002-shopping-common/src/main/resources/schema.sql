@@ -26,7 +26,9 @@ create table if not exists t_order (
     customer_address varchar(100),
     customer_phone varchar(100),
     customer_email_address varchar(100),
-    payment_method varchar(100)
+    payment_method varchar(100),
+    points_used decimal(15,2) default 0,
+    points_earned decimal(15,2) default 0
 );
 
 create table if not exists t_order_item (
