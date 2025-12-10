@@ -13,6 +13,8 @@ public class AppUser implements Serializable {
     private int itemsPurchased = 0;
     private int purchaseCount = 0;
     private BigDecimal totalSpent = BigDecimal.ZERO;
+    private BigDecimal points = BigDecimal.ZERO;
+    private BigDecimal pointRate = BigDecimal.ZERO;
 
     public String getId() {
     	return id;
@@ -63,12 +65,28 @@ public class AppUser implements Serializable {
     }
 
     public BigDecimal getTotalSpent() {
-    	// 念のためnullチェックして安全に返す
-    	return totalSpent == null ? BigDecimal.ZERO : totalSpent;
+        // 念のためnullチェックして安全に返す
+        return totalSpent == null ? BigDecimal.ZERO : totalSpent;
     }
 
     public void setTotalSpent(BigDecimal totalSpent) {
-    	// nullが渡された場合は BigDecimal.ZERO に置き換える
-    	this.totalSpent = totalSpent == null ? BigDecimal.ZERO : totalSpent;
+        // nullが渡された場合は BigDecimal.ZERO に置き換える
+        this.totalSpent = totalSpent == null ? BigDecimal.ZERO : totalSpent;
+    }
+
+    public BigDecimal getPoints() {
+        return points == null ? BigDecimal.ZERO : points;
+    }
+
+    public void setPoints(BigDecimal points) {
+        this.points = points == null ? BigDecimal.ZERO : points;
+    }
+
+    public BigDecimal getPointRate() {
+        return pointRate == null ? BigDecimal.ZERO : pointRate;
+    }
+
+    public void setPointRate(BigDecimal pointRate) {
+        this.pointRate = pointRate == null ? BigDecimal.ZERO : pointRate;
     }
 }

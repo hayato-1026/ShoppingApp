@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 
 // シリアライズ可能なクラスとして、注文情報を保持するデータモデル
 @SuppressWarnings("serial") // シリアライズに関する警告を抑制
@@ -28,6 +29,9 @@ public class OrderInput implements Serializable {
 
     @NotNull // nullを許可しないバリデーション
     private PaymentMethod paymentMethod; // 支払い方法
+
+    @PositiveOrZero
+    private Integer usePoints = 0;
 
     // 支払い方法を取得するゲッターメソッド
     public PaymentMethod getPaymentMethod() {
@@ -77,5 +81,13 @@ public class OrderInput implements Serializable {
     // メールアドレスを設定するセッターメソッド
     public void setEmailAddress(String emailAddress) {
         this.emailAddress = emailAddress;
+    }
+
+    public Integer getUsePoints() {
+        return usePoints;
+    }
+
+    public void setUsePoints(Integer usePoints) {
+        this.usePoints = usePoints;
     }
 }

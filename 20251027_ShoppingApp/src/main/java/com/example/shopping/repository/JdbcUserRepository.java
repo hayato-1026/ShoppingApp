@@ -27,6 +27,8 @@ public class JdbcUserRepository implements UserRepository {
         user.setItemsPurchased(rs.getInt("items_purchased"));
         user.setPurchaseCount(rs.getInt("purchase_count"));
         user.setTotalSpent(rs.getBigDecimal("total_spent"));
+        user.setPoints(rs.getBigDecimal("points"));
+        user.setPointRate(rs.getBigDecimal("point_rate"));
         return user;
     };
 
@@ -38,14 +40,16 @@ public class JdbcUserRepository implements UserRepository {
         }
 
         jdbcTemplate.update(
-            "INSERT INTO t_user (id, username, password, role, items_purchased, purchase_count, total_spent) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO t_user (id, username, password, role, items_purchased, purchase_count, total_spent, points, point_rate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
             user.getId(),
             user.getUsername(),
             user.getPassword(),
             user.getRole(),
             user.getItemsPurchased(),
             user.getPurchaseCount(),
-            user.getTotalSpent()
+            user.getTotalSpent(),
+            user.getPoints(),
+            user.getPointRate()
         );
     }
 
@@ -55,6 +59,14 @@ public class JdbcUserRepository implements UserRepository {
             "SELECT * FROM t_user WHERE username = ?",
             userRowMapper,
             username
+        );
+    }
+
+    public AppUser findById(String id) {
+        return jdbcTemplate.queryForObject(
+            "SELECT * FROM t_user WHERE id = ?",
+            userRowMapper,
+            id
         );
     }
 
@@ -69,5 +81,23 @@ public class JdbcUserRepository implements UserRepository {
                      "WHERE id = ?";
         // JdbcTemplate#update は更新件数を返す
         return jdbcTemplate.update(sql, addItems, addPurchaseCount, addAmount, id);
+    }
+
+    public int updateAfterOrder(String id, int addItems, int addPurchaseCount, BigDecimal addAmount,
+                                BigDecimal addPoints, BigDecimal usePoints) {
+        Assert.hasText(id, "id must not be empty");
+        String sql = "UPDATE t_user " +
+                     "SET items_purchased = items_purchased + ?, " +
+                     "    purchase_count = purchase_count + ?, " +
+                     "    total_spent = COALESCE(total_spent, 0) + ?, " +
+                     "    points = COALESCE(points, 0) + ? - ? " +
+                     "WHERE id = ?";
+        return jdbcTemplate.update(sql,
+                addItems,
+                addPurchaseCount,
+                addAmount,
+                addPoints,
+                usePoints,
+                id);
     }
 }

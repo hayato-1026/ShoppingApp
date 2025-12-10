@@ -7,6 +7,9 @@ import com.example.shopping.entity.AppUser;
 public interface UserRepository {
     void insert(AppUser user);
     AppUser findByUsername(String username);
+    AppUser findById(String id);
 
     int updateAggregatesById(String id, int addItems, int addPurchaseCount, BigDecimal orderTotal);
+    int updateAfterOrder(String id, int addItems, int addPurchaseCount, BigDecimal addAmount,
+                         BigDecimal addPoints, BigDecimal usePoints);
 }

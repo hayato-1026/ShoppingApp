@@ -22,8 +22,8 @@ public class JdbcOrderRepository {
      */
     public int insert(Order order) {
         Objects.requireNonNull(order, "order must not be null");
-        String sql = "INSERT INTO t_order (id, order_date_time, billing_amount, customer_name, customer_address, customer_phone, customer_email_address, payment_method) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO t_order (id, order_date_time, billing_amount, customer_name, customer_address, customer_phone, customer_email_address, payment_method, points_used, points_earned) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         return jdbcTemplate.update(
                 sql,
                 order.getId(),
@@ -33,7 +33,9 @@ public class JdbcOrderRepository {
                 order.getCustomerAddress(),
                 order.getCustomerPhone(),
                 order.getCustomerEmailAddress(),
-                order.getPaymentMethod() == null ? null : order.getPaymentMethod().name()
+                order.getPaymentMethod() == null ? null : order.getPaymentMethod().name(),
+                order.getPointsUsed(),
+                order.getPointsEarned()
         );
     }
 }
