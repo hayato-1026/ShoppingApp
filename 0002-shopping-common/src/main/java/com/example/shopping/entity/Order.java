@@ -19,6 +19,8 @@ public class Order implements Serializable {
     private String customerPhone;
     private String customerEmailAddress;
     private PaymentMethod paymentMethod;
+    private BigDecimal pointsUsed = BigDecimal.ZERO;
+    private BigDecimal pointsEarned = BigDecimal.ZERO;
 
     public String getId() {
         return id;
@@ -90,5 +92,21 @@ public class Order implements Serializable {
 
     public void setPaymentMethod(PaymentMethod paymentMethod) {
         this.paymentMethod = paymentMethod;
+    }
+
+    public BigDecimal getPointsUsed() {
+        return pointsUsed == null ? BigDecimal.ZERO : pointsUsed;
+    }
+
+    public void setPointsUsed(BigDecimal pointsUsed) {
+        this.pointsUsed = pointsUsed == null ? BigDecimal.ZERO : pointsUsed;
+    }
+
+    public BigDecimal getPointsEarned() {
+        return pointsEarned == null ? BigDecimal.ZERO : pointsEarned;
+    }
+
+    public void setPointsEarned(BigDecimal pointsEarned) {
+        this.pointsEarned = pointsEarned == null ? BigDecimal.ZERO : pointsEarned;
     }
 }

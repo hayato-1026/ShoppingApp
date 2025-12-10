@@ -161,6 +161,12 @@
 
                         <dt>合計金額</dt>
                         <dd th:text="${profile.totalSpentFormatted}">¥0</dd>
+
+                        <dt>保有ポイント</dt>
+                        <dd th:text="${profile.points}">0</dd>
+
+                        <dt>ポイント還元率</dt>
+                        <dd th:text="${profile.pointRateFormatted}">0%</dd>
                     </dl>
 
                     <a th:href="@{/catalog/display-list}" class="back-link">商品一覧に戻る</a>

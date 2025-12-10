@@ -1,6 +1,8 @@
 package com.example.shopping.controller;
 
+import java.math.BigDecimal;
 import java.security.Principal;
+import java.math.RoundingMode;
 
 import com.example.shopping.entity.AppUser;
 import com.example.shopping.input.OrderInput;
@@ -35,27 +37,31 @@ public class OrderController {
     }
 
     @GetMapping("/display-form")
-    public String displayForm(Model model) {
+    public String displayForm(Model model, Principal principal) {
         OrderInput orderInput = new OrderInput();
         orderInput.setPaymentMethod(PaymentMethod.BANK);
         model.addAttribute("orderInput", orderInput);
+        model.addAttribute("availablePoints", resolveAvailablePoints(principal));
         return "order/orderForm";
     }
 
     @PostMapping("/validate-input")
     public String validateInput(
-        @Validated OrderInput orderInput, BindingResult bindingResult, Model model) {
+        @Validated OrderInput orderInput, BindingResult bindingResult, Model model, Principal principal) {
+        model.addAttribute("availablePoints", resolveAvailablePoints(principal));
         if (bindingResult.hasErrors()) {
             return "order/orderForm";
         }
+        sanitizePointsForConfirmation(orderInput, model);
         orderSession.setOrderInput(orderInput);
         model.addAttribute("cartInput", orderSession.getCartInput());
         return "order/orderConfirmation";
     }
 
     @PostMapping(value = "/place-order", params = "correct")
-    public String correctInput(Model model) {
+    public String correctInput(Model model, Principal principal) {
         model.addAttribute("orderInput", orderSession.getOrderInput());
+        model.addAttribute("availablePoints", resolveAvailablePoints(principal));
         return "order/orderForm";
     }
 
@@ -78,7 +84,14 @@ public class OrderController {
         // 注文確定（OrderService 内でも orderSession を参照します）
         Order order = orderService.placeOrder(orderSession.getOrderInput(), orderSession.getCartInput());
 
+        // 最新のポイント残高を取得
+        AppUser updated = userService.findByUsername(principal.getName());
+
         redirectAttributes.addFlashAttribute("order", order);
+        redirectAttributes.addFlashAttribute("usedPoints", order.getPointsUsed());
+        redirectAttributes.addFlashAttribute("earnedPoints", order.getPointsEarned());
+        redirectAttributes.addFlashAttribute("remainingPoints", updated == null ? BigDecimal.ZERO : updated.getPoints());
+        redirectAttributes.addFlashAttribute("payableAmount", order.getBillingAmount());
 
         // orderService.placeOrder 内でクリアしている場合は二重クリアになりますが問題ありません
         orderSession.clearData();
@@ -94,5 +107,34 @@ public class OrderController {
     @ExceptionHandler(StockShortageException.class)
     public String displayStockShortagePage() {
         return "order/stockShortage";
+    }
+
+    private void sanitizePointsForConfirmation(OrderInput orderInput, Model model) {
+        BigDecimal availablePoints = orderSession.getAppUser() != null ? orderSession.getAppUser().getPoints() : BigDecimal.ZERO;
+        BigDecimal billingAmount = orderSession.getCartInput() == null || orderSession.getCartInput().getBillingAmount() == null
+                ? BigDecimal.ZERO
+                : orderSession.getCartInput().getBillingAmount();
+
+        BigDecimal requested = BigDecimal.valueOf(orderInput.getUsePoints() == null ? 0 : orderInput.getUsePoints())
+                .max(BigDecimal.ZERO);
+        BigDecimal capped = requested.min(availablePoints).min(billingAmount).setScale(0, RoundingMode.HALF_UP);
+        orderInput.setUsePoints(capped.intValue());
+
+        BigDecimal payable = billingAmount.subtract(capped).max(BigDecimal.ZERO);
+        model.addAttribute("usedPoints", capped);
+        model.addAttribute("availablePoints", availablePoints);
+        model.addAttribute("payableAmount", payable);
+    }
+
+    private BigDecimal resolveAvailablePoints(Principal principal) {
+        if (principal == null || principal.getName() == null) {
+            return BigDecimal.ZERO;
+        }
+        AppUser appUser = userService.findByUsername(principal.getName());
+        if (appUser != null) {
+            orderSession.setAppUser(appUser);
+            return appUser.getPoints();
+        }
+        return BigDecimal.ZERO;
     }
 }

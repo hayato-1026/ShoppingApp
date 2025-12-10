@@ -42,6 +42,7 @@ public class OrderServiceImpl implements OrderService {
     private final JdbcDepartmentRepository departmentRepository; // 追加
     private final OrderSession orderSession;
     private final PricingService pricingService; // 追加
+    private final JdbcUserRepository userRepository;
 
     public OrderServiceImpl(JdbcOrderRepository orderRepository,JdbcOrderItemRepository orderItemRepository,JdbcUserRepository userRepository,JdbcProductRepository productRepository,JdbcDepartmentRepository departmentRepository,OrderSession orderSession,PricingService pricingService) {
         this.orderRepository = orderRepository;
@@ -50,6 +51,7 @@ public class OrderServiceImpl implements OrderService {
         this.departmentRepository = departmentRepository;
         this.orderSession = orderSession;
         this.pricingService = pricingService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -88,9 +90,14 @@ public class OrderServiceImpl implements OrderService {
             throw new IllegalArgumentException("カートが空です。");
         }
 
-        AppUser appUser = orderSession.getAppUser();
-        if (appUser == null || appUser.getId() == null) {
+        AppUser sessionUser = orderSession.getAppUser();
+        if (sessionUser == null || sessionUser.getId() == null) {
             throw new IllegalStateException("ユーザがログインしていません。");
+        }
+
+        AppUser appUser = userRepository.findById(sessionUser.getId());
+        if (appUser == null) {
+            throw new IllegalStateException("ユーザ情報が見つかりません。");
         }
 
         // PricingService で再計算して billingAmount を取得（かつ Line ごとの金額取得）
@@ -99,12 +106,18 @@ public class OrderServiceImpl implements OrderService {
         if (billingAmount == null) {
             billingAmount = BigDecimal.ZERO.setScale(0, MONEY_ROUNDING);
         }
+        BigDecimal availablePoints = appUser.getPoints();
+        BigDecimal requestedUsePoints = BigDecimal.valueOf(orderInput.getUsePoints() == null ? 0 : orderInput.getUsePoints())
+                .max(BigDecimal.ZERO);
+        BigDecimal usePoints = requestedUsePoints.min(availablePoints).min(billingAmount).setScale(0, MONEY_ROUNDING);
+        BigDecimal billingAfterPoints = billingAmount.subtract(usePoints).max(BigDecimal.ZERO).setScale(0, MONEY_ROUNDING);
 
         // Order 作成
         Order order = new Order();
         order.setId(UUID.randomUUID().toString());
         order.setOrderDateTime(LocalDateTime.now());
-        order.setBillingAmount(billingAmount);
+        order.setBillingAmount(billingAfterPoints);
+        order.setPointsUsed(usePoints);
 
         // 顧客情報
         order.setCustomerName(orderInput.getName());
@@ -139,6 +152,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // 注文明細の挿入と在庫減算
+        int totalItems = 0;
         for (CartItemInput ci : cartInput.getCartItemInputs()) {
             if (ci == null) continue;
             Product p = productMap.get(ci.getProductId());
@@ -147,10 +161,13 @@ public class OrderServiceImpl implements OrderService {
                 throw new IllegalStateException("注文処理中に商品が見つかりません: " + ci.getProductId());
             }
 
-            int qty = ci.getQuantity();
+            Integer qtyValue = ci.getQuantity();
+            int qty = qtyValue == null ? 0 : qtyValue;
             if (qty <= 0) {
                 continue; // 数量ゼロならスキップ（あるいは例外にする判断でも可）
             }
+
+            totalItems += qty;
 
             int updated = productRepository.decreaseStockIfAvailable(p.getId(), qty);
             if (updated <= 0) {
@@ -169,6 +186,9 @@ public class OrderServiceImpl implements OrderService {
             // 注文明細を保存
             orderItemRepository.insert(oi);
         }
+
+        BigDecimal earnedPoints = calculateEarnedPoints(cartInput.getCartItemInputs(), productMap, appUser.getPointRate());
+        order.setPointsEarned(earnedPoints);
 
         // department_sales 集計（PricingService の Line 結果を利用）
         // 前提: pr.getLineResults() は cartInput.getCartItemInputs() と同一順序で対応している
@@ -193,7 +213,8 @@ public class OrderServiceImpl implements OrderService {
             }
             // フォールバック：もし LinePricingResult が存在しなければ単価*qty（税/割引未反映）を使用
             if (lineFinalAmount == null) {
-                lineFinalAmount = BigDecimal.valueOf(p.getPrice()).multiply(BigDecimal.valueOf(ci.getQuantity()));
+                int qty = ci.getQuantity() == null ? 0 : ci.getQuantity();
+                lineFinalAmount = BigDecimal.valueOf(p.getPrice()).multiply(BigDecimal.valueOf(qty));
             }
 
             // 高精度のまま集計（必要ならここで setScale で丸め）
@@ -205,7 +226,38 @@ public class OrderServiceImpl implements OrderService {
             departmentRepository.incrementDepartmentSales(deptSums);
         }
 
+        // ユーザの集計・ポイント更新
+        int updated = userRepository.updateAfterOrder(appUser.getId(), totalItems, 1, billingAfterPoints, earnedPoints, usePoints);
+        if (updated == 0) {
+            throw new IllegalStateException("ユーザ情報の更新に失敗しました。");
+        }
+
         // 正常終了
         return order;
+    }
+
+    private BigDecimal calculateEarnedPoints(List<CartItemInput> cartItems, Map<String, Product> productMap, BigDecimal pointRate) {
+        if (cartItems == null || productMap == null) {
+            return BigDecimal.ZERO.setScale(0, MONEY_ROUNDING);
+        }
+        BigDecimal rate = pointRate == null ? BigDecimal.ZERO : pointRate;
+        BigDecimal total = BigDecimal.ZERO;
+
+        for (CartItemInput ci : cartItems) {
+            if (ci == null) continue;
+            Product p = productMap.get(ci.getProductId());
+            if (p == null) continue;
+
+            int qty = ci.getQuantity() == null ? 0 : ci.getQuantity();
+            if (qty <= 0) continue;
+
+            BigDecimal baseAmount = BigDecimal.valueOf(p.getPrice()).multiply(BigDecimal.valueOf(qty));
+            BigDecimal basePoints = baseAmount.multiply(rate);
+            BigDecimal multiplier = BigDecimal.ONE.add(p.getPointMag());
+            BigDecimal linePoints = basePoints.multiply(multiplier);
+            total = total.add(linePoints);
+        }
+
+        return total.setScale(0, MONEY_ROUNDING);
     }
 }

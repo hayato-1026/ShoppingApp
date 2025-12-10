@@ -13,6 +13,7 @@ public class Product implements Serializable {
     private Integer departmentCode;
     private BigDecimal taxRate;
     private BigDecimal discountRate;
+    private BigDecimal pointMag;
 
     public String getId() {
         return id;
@@ -63,11 +64,19 @@ public class Product implements Serializable {
     }
 
     public BigDecimal getDiscountRate() {
-    	return discountRate;
+        return discountRate;
     }
 
     public void setDiscountRate(BigDecimal discountRate) {
-    	this.discountRate = discountRate;
+        this.discountRate = discountRate;
+    }
+
+    public BigDecimal getPointMag() {
+        return pointMag == null ? BigDecimal.ZERO : pointMag;
+    }
+
+    public void setPointMag(BigDecimal pointMag) {
+        this.pointMag = pointMag == null ? BigDecimal.ZERO : pointMag;
     }
 
 }

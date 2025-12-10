@@ -135,6 +135,17 @@
                         </div>
                     </td>
                 </tr>
+                <tr>
+                    <th>利用可能ポイント</th>
+                    <td th:text="${availablePoints}">0</td>
+                </tr>
+                <tr>
+                    <th>使用ポイント</th>
+                    <td>
+                        <input type="number" min="0" th:field="*{usePoints}" />
+                        <div class="th-errors" th:errors="*{usePoints}"></div>
+                    </td>
+                </tr>
             </table>
             <input type="submit" value="注文内容を確認" />
         </form>

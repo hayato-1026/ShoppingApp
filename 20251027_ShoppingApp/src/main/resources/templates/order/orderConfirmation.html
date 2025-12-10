@@ -108,6 +108,8 @@
     </table>
     <div>合計金額: <span th:text="${cartInput.totalAmount}"></span>円</div>
     <div>請求金額: <span th:text="${cartInput.billingAmount}"></span>円(税込)</div>
+    <div>使用ポイント: <span th:text="${usedPoints}"></span>pt</div>
+    <div>支払金額(ポイント適用後): <span th:text="${payableAmount}"></span>円</div>
     <input name="order" type="submit" value="注文を確定"/>
     <input name="correct" type="submit" value="注文内容を変更"/>
   </form>

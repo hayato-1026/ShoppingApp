@@ -58,6 +58,10 @@
             ご注文ありがとうございます！<br>
             ご注文内容が確定しました。<br>
             <strong>注文ID:</strong> 「<span th:text="${order.id}">12345</span>」
+            <div th:if="${payableAmount != null}">お支払い金額: <span th:text="${payableAmount}"></span>円</div>
+            <div th:if="${usedPoints != null}">使用ポイント: <span th:text="${usedPoints}"></span>pt</div>
+            <div th:if="${earnedPoints != null}">獲得ポイント: <span th:text="${earnedPoints}"></span>pt</div>
+            <div th:if="${remainingPoints != null}">保有ポイント残高: <span th:text="${remainingPoints}"></span>pt</div>
         </div>
         <a th:href="@{/catalog/display-list}">商品一覧に戻る</a>
     </body>

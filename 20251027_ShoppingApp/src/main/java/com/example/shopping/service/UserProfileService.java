@@ -3,6 +3,7 @@ package com.example.shopping.service;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.math.RoundingMode;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,11 @@ public class UserProfileService {
         }
 
         BigDecimal total = user.getTotalSpent();
+        BigDecimal points = user.getPoints();
+        BigDecimal rate = user.getPointRate();
+        String rateFormatted = rate == null
+                ? "0%"
+                : rate.multiply(new BigDecimal("100")).setScale(1, RoundingMode.HALF_UP) + "%";
 
         NumberFormat nf = NumberFormat.getNumberInstance(Locale.JAPAN);
         nf.setGroupingUsed(true);
@@ -45,7 +51,10 @@ public class UserProfileService {
                 user.getItemsPurchased(),
                 user.getPurchaseCount(),
                 total,
-                formatted
+                formatted,
+                points,
+                rate,
+                rateFormatted
         );
     }
 }
