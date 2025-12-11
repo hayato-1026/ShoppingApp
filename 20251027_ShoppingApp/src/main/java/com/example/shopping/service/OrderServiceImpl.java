@@ -187,7 +187,8 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.insert(oi);
         }
 
-        BigDecimal earnedPoints = calculateEarnedPoints(cartInput.getCartItemInputs(), productMap, appUser.getPointRate());
+        BigDecimal rawEarnedPoints = calculateEarnedPoints(cartInput.getCartItemInputs(), productMap, appUser.getPointRate());
+        BigDecimal earnedPoints = adjustEarnedPointsForPointUsage(rawEarnedPoints, billingAmount, billingAfterPoints);
         order.setPointsEarned(earnedPoints);
 
         // department_sales 集計（PricingService の Line 結果を利用）
@@ -259,5 +260,18 @@ public class OrderServiceImpl implements OrderService {
         }
 
         return total.setScale(0, MONEY_ROUNDING);
+    }
+
+    private BigDecimal adjustEarnedPointsForPointUsage(BigDecimal rawEarnedPoints, BigDecimal billingAmount, BigDecimal billingAfterPoints) {
+        if (rawEarnedPoints == null) {
+            rawEarnedPoints = BigDecimal.ZERO;
+        }
+        if (billingAmount == null || billingAfterPoints == null || billingAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return rawEarnedPoints.setScale(0, MONEY_ROUNDING);
+        }
+
+        BigDecimal ratio = billingAfterPoints.divide(billingAmount, 6, RoundingMode.HALF_UP);
+        BigDecimal adjusted = rawEarnedPoints.multiply(ratio);
+        return adjusted.setScale(0, MONEY_ROUNDING);
     }
 }
