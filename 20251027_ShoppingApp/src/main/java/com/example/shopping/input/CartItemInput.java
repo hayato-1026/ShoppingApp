@@ -2,13 +2,26 @@ package com.example.shopping.input;
 
 import java.io.Serializable;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
 // シリアライズ可能なクラスとして、カート内の各商品情報を保持するデータモデル
 @SuppressWarnings("serial") // シリアライズに関する警告を抑制
 public class CartItemInput implements Serializable {
     private String id; // カートアイテムの一意のID
+
+    @NotBlank(message = "商品IDが不正です")
     private String productId; // 商品のID
+
     private String productName; // 商品名
+
     private Integer productPrice; // 商品の価格
+
+    @NotNull(message = "数量を入力してください")
+    @Min(value = 1, message = "数量は1以上で入力してください")
+    @Max(value = 99, message = "数量は99以下で入力してください")
     private Integer quantity; // 商品の数量
 
     // 商品名を取得するゲッターメソッド
