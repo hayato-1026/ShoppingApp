@@ -25,6 +25,7 @@ import com.example.shopping.input.OrderInput;
 import com.example.shopping.enumeration.PaymentMethod;
 import com.example.shopping.dto.CartPricingResult;
 import com.example.shopping.dto.LinePricingResult;
+import com.example.shopping.service.PointsCalculator;
 import com.example.shopping.repository.JdbcDepartmentRepository;
 import com.example.shopping.repository.JdbcOrderItemRepository;
 import com.example.shopping.repository.JdbcOrderRepository;
@@ -44,8 +45,9 @@ public class OrderServiceImpl implements OrderService {
     private final OrderSession orderSession;
     private final PricingService pricingService; // 追加
     private final JdbcUserRepository userRepository;
+    private final PointsCalculator pointsCalculator;
 
-    public OrderServiceImpl(JdbcOrderRepository orderRepository,JdbcOrderItemRepository orderItemRepository,JdbcUserRepository userRepository,JdbcProductRepository productRepository,JdbcDepartmentRepository departmentRepository,OrderSession orderSession,PricingService pricingService) {
+    public OrderServiceImpl(JdbcOrderRepository orderRepository,JdbcOrderItemRepository orderItemRepository,JdbcUserRepository userRepository,JdbcProductRepository productRepository,JdbcDepartmentRepository departmentRepository,OrderSession orderSession,PricingService pricingService, PointsCalculator pointsCalculator) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
@@ -53,6 +55,7 @@ public class OrderServiceImpl implements OrderService {
         this.orderSession = orderSession;
         this.pricingService = pricingService;
         this.userRepository = userRepository;
+        this.pointsCalculator = pointsCalculator;
     }
 
     @Override
@@ -188,8 +191,8 @@ public class OrderServiceImpl implements OrderService {
             orderItemRepository.insert(oi);
         }
 
-        BigDecimal rawEarnedPoints = calculateEarnedPoints(cartInput.getCartItemInputs(), productMap, appUser.getPointRate());
-        BigDecimal earnedPoints = adjustEarnedPointsForPointUsage(rawEarnedPoints, billingAmount, billingAfterPoints);
+        BigDecimal rawEarnedPoints = pointsCalculator.calculateRawEarnedPoints(cartInput.getCartItemInputs(), productMap, appUser.getPointRate());
+        BigDecimal earnedPoints = pointsCalculator.adjustForPointUsage(rawEarnedPoints, billingAmount, billingAfterPoints);
         order.setPointsEarned(earnedPoints);
 
         // department_sales 集計（PricingService の Line 結果を利用）
@@ -236,43 +239,5 @@ public class OrderServiceImpl implements OrderService {
 
         // 正常終了
         return order;
-    }
-
-    private BigDecimal calculateEarnedPoints(List<CartItemInput> cartItems, Map<String, Product> productMap, BigDecimal pointRate) {
-        if (cartItems == null || productMap == null) {
-            return BigDecimal.ZERO.setScale(0, MONEY_ROUNDING);
-        }
-        BigDecimal rate = pointRate == null ? BigDecimal.ZERO : pointRate;
-        BigDecimal total = BigDecimal.ZERO;
-
-        for (CartItemInput ci : cartItems) {
-            if (ci == null) continue;
-            Product p = productMap.get(ci.getProductId());
-            if (p == null) continue;
-
-            int qty = ci.getQuantity() == null ? 0 : ci.getQuantity();
-            if (qty <= 0) continue;
-
-            BigDecimal baseAmount = BigDecimal.valueOf(p.getPrice()).multiply(BigDecimal.valueOf(qty));
-            BigDecimal basePoints = baseAmount.multiply(rate);
-            BigDecimal multiplier = BigDecimal.ONE.add(p.getPointMag());
-            BigDecimal linePoints = basePoints.multiply(multiplier);
-            total = total.add(linePoints);
-        }
-
-        return total.setScale(0, MONEY_ROUNDING);
-    }
-
-    private BigDecimal adjustEarnedPointsForPointUsage(BigDecimal rawEarnedPoints, BigDecimal billingAmount, BigDecimal billingAfterPoints) {
-        if (rawEarnedPoints == null) {
-            rawEarnedPoints = BigDecimal.ZERO;
-        }
-        if (billingAmount == null || billingAfterPoints == null || billingAmount.compareTo(BigDecimal.ZERO) <= 0) {
-            return rawEarnedPoints.setScale(0, MONEY_ROUNDING);
-        }
-
-        BigDecimal ratio = billingAfterPoints.divide(billingAmount, 6, RoundingMode.HALF_UP);
-        BigDecimal adjusted = rawEarnedPoints.multiply(ratio);
-        return adjusted.setScale(0, MONEY_ROUNDING);
     }
 }

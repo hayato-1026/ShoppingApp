@@ -48,10 +48,27 @@ public class OrderController {
     @PostMapping("/validate-input")
     public String validateInput(
         @Validated OrderInput orderInput, BindingResult bindingResult, Model model, Principal principal) {
-        model.addAttribute("availablePoints", resolveAvailablePoints(principal));
+        BigDecimal availablePoints = resolveAvailablePoints(principal);
+        model.addAttribute("availablePoints", availablePoints);
         if (bindingResult.hasErrors()) {
             return "order/orderForm";
         }
+
+        BigDecimal billingAmount = orderSession.getCartInput() == null || orderSession.getCartInput().getBillingAmount() == null
+                ? BigDecimal.ZERO
+                : orderSession.getCartInput().getBillingAmount();
+        BigDecimal requestedUsePoints = BigDecimal.valueOf(orderInput.getUsePoints() == null ? 0 : orderInput.getUsePoints())
+                .max(BigDecimal.ZERO);
+        BigDecimal allowedMax = availablePoints.min(billingAmount).setScale(0, RoundingMode.HALF_UP);
+        if (requestedUsePoints.compareTo(allowedMax) > 0) {
+            bindingResult.rejectValue(
+                "usePoints",
+                "usePoints.exceeds",
+                "使用ポイントは「保有ポイント」と「請求額」以下で入力してください。");
+            model.addAttribute("availablePoints", availablePoints);
+            return "order/orderForm";
+        }
+
         sanitizePointsForConfirmation(orderInput, model);
         orderSession.setOrderInput(orderInput);
         model.addAttribute("cartInput", orderSession.getCartInput());
@@ -116,12 +133,11 @@ public class OrderController {
                 : orderSession.getCartInput().getBillingAmount();
 
         BigDecimal requested = BigDecimal.valueOf(orderInput.getUsePoints() == null ? 0 : orderInput.getUsePoints())
-                .max(BigDecimal.ZERO);
-        BigDecimal capped = requested.min(availablePoints).min(billingAmount).setScale(0, RoundingMode.HALF_UP);
-        orderInput.setUsePoints(capped.intValue());
+                .max(BigDecimal.ZERO)
+                .setScale(0, RoundingMode.HALF_UP);
 
-        BigDecimal payable = billingAmount.subtract(capped).max(BigDecimal.ZERO);
-        model.addAttribute("usedPoints", capped);
+        BigDecimal payable = billingAmount.subtract(requested).max(BigDecimal.ZERO).setScale(0, RoundingMode.HALF_UP);
+        model.addAttribute("usedPoints", requested);
         model.addAttribute("availablePoints", availablePoints);
         model.addAttribute("payableAmount", payable);
     }
