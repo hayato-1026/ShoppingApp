@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import com.example.shopping.controller.OrderSession;
+import com.example.shopping.exception.StockShortageException;
 import com.example.shopping.entity.AppUser;
 import com.example.shopping.entity.Order;
 import com.example.shopping.entity.OrderItem;
@@ -172,7 +173,7 @@ public class OrderServiceImpl implements OrderService {
             int updated = productRepository.decreaseStockIfAvailable(p.getId(), qty);
             if (updated <= 0) {
                 // 在庫不足 -> ロールバック
-                throw new IllegalStateException("在庫不足: productId=" + p.getId());
+                throw new StockShortageException("在庫不足: productId=" + p.getId());
             }
 
             // 注文明細作成（既存 OrderItem のフィールドに合わせて調整してください）
